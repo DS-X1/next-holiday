@@ -51,6 +51,7 @@ async function getHolidays (countryCode) {
 	let holidays = await fetchData(url);
 	
 	//Get the next four holidays, store in nextFourHolidays variable
+	nextFourHolidays = [];
 	for (let i = 0; i < holidays.length; i++) {
 		let currHolidayDate = new Date(holidays[i].date + "T00:00:00Z");
 		
@@ -58,10 +59,12 @@ async function getHolidays (countryCode) {
 			nextFourHolidays.push(holidays[i]);
 		}
 	}
+	console.log(url);
 }
 
-async function main() {
-	await getHolidays('LC');
+async function main(countryName, countryCode) {
+	
+	await getHolidays(countryCode);
 	console.log(nextFourHolidays);
 	let daysUntil = daysBetween(new Date(nextFourHolidays[0].date), today);
 	let nextHoliday = nextFourHolidays[0];
@@ -76,16 +79,27 @@ async function main() {
 	
 	document.querySelector("#holiday-current-box").innerHTML = `${nextHoliday.name}! <br> ${parseSimpleDate(nextHoliday.date, true)}`;
 	
-	for (i=1;i < 4;i++) {
+	//Display country
+	document.querySelector("#country-display").innerHTML = countryName;
+	
+	for (i=1;i < nextFourHolidays.length;i++) {
 		currHoliday = nextFourHolidays[i];
 		document.querySelector(`#holiday-${i}-box`).innerHTML = `${currHoliday.name} <br> ${parseSimpleDate(currHoliday.date, true)}`;
 	}
 	
 }
 
-main();
+main("Saint Lucia", "LC");
 //Display today's date
 document.querySelector("#date-display").innerHTML = today.toLocaleString("en-US", {
 	month: "long",
 	day: "numeric",
 	year: "numeric"});
+
+//Changes country based on what user selected manually
+document.querySelector("#countries").addEventListener("change", function () {
+    [country, countryCode] = this.value.split("-");
+	
+	main(country, countryCode);
+	console.log('COUNTRU');
+  });
