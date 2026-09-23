@@ -1,5 +1,5 @@
 // Set today's date as variable
-let today = new Date();
+let today = Temporal.Now.plainDateISO();
 let nextFourHolidays = [];
 
 async function fetchData(url) {
@@ -18,12 +18,12 @@ async function fetchData(url) {
   }
 }
 
-function daysBetween(date1, date2) {
-	date1.setUTCHours(0, 0, 0, 0);
-	date2.setUTCHours(0, 0, 0, 0);
+function daysUntil(date2) {
+	date2 = Temporal.PlainDate.from(date2);
 	
-	let days = Math.round((date1-date2) / (1000 * 60 * 60 * 24));
+	const days = date2.since(today).days;
 	return days;
+
 }
 
 function parseSimpleDate(date, utc) {
@@ -53,9 +53,9 @@ async function getHolidays (countryCode) {
 	//Get the next four holidays, store in nextFourHolidays variable
 	nextFourHolidays = [];
 	for (let i = 0; i < holidays.length; i++) {
-		let currHolidayDate = new Date(holidays[i].date + "T00:00:00Z");
+		let currHolidayDate = Temporal.PlainDate.from(holidays[i].date);
 		
-		if (today <= currHolidayDate && nextFourHolidays.length < 4) {
+		if (Temporal.PlainDate.compare(currHolidayDate, today) > 0 && nextFourHolidays.length < 4) {
 			nextFourHolidays.push(holidays[i]);
 		}
 	}
@@ -65,23 +65,26 @@ async function getHolidays (countryCode) {
 async function main(countryName, countryCode) {
 	
 	await getHolidays(countryCode);
-	console.log(nextFourHolidays);
-	let daysUntil = daysBetween(new Date(nextFourHolidays[0].date), today);
+	let daysRemaining = daysUntil(Temporal.PlainDate.from(nextFourHolidays[0].date));
 	let nextHoliday = nextFourHolidays[0];
 	
-	//testing
-	console.log("today:", today);
-	console.log("holiday:", new Date(nextFourHolidays[0].date));
-	console.log("difference:", daysUntil);
-	
 	//Populate days until and current holiday
-	document.querySelector("#days-until").innerHTML = `${daysUntil} days until...`;
+	document.querySelector("#days-until").innerHTML = `${daysRemaining} days until...`;
 	
 	document.querySelector("#holiday-current-box").innerHTML = `${nextHoliday.name}! <br> ${parseSimpleDate(nextHoliday.date, true)}`;
 	
 	//Display country
 	document.querySelector("#country-display").innerHTML = countryName;
 	
+	
+	// SHOW NEXT HOLIDAYS
+	
+	// *Clear list if previous data left over
+	for (let i=1; i < 4; i++) {
+		document.querySelector(`#holiday-${i}-box`).innerHTML = '';
+	}
+	
+	// Display upcoming holidays
 	for (i=1;i < nextFourHolidays.length;i++) {
 		currHoliday = nextFourHolidays[i];
 		document.querySelector(`#holiday-${i}-box`).innerHTML = `${currHoliday.name} <br> ${parseSimpleDate(currHoliday.date, true)}`;
@@ -89,7 +92,7 @@ async function main(countryName, countryCode) {
 	
 }
 
-main("Saint Lucia", "LC");
+
 //Display today's date
 document.querySelector("#date-display").innerHTML = today.toLocaleString("en-US", {
 	month: "long",
