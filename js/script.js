@@ -47,16 +47,31 @@ function parseSimpleDate(date, utc) {
 
 //Fetch country holiday data
 async function getHolidays (countryCode) {
-	let url = `https://nagerholidays.com/api/v4/Holidays/${countryCode}/2026`;
+	let url = `https://nagerholidays.com/api/v4/Holidays/${countryCode}/${today.year}`;
 	let holidays = await fetchData(url);
 	
 	//Get the next four holidays, store in nextFourHolidays variable
 	nextFourHolidays = [];
+	
 	for (let i = 0; i < holidays.length; i++) {
 		let currHolidayDate = Temporal.PlainDate.from(holidays[i].date);
 		
 		if (Temporal.PlainDate.compare(currHolidayDate, today) > 0 && nextFourHolidays.length < 4) {
 			nextFourHolidays.push(holidays[i]);
+		}
+	}
+	
+	// Add in next year's holidays if there's less than 4 holidays left in this year
+	if (nextFourHolidays.length < 4) {
+		let url = `https://nagerholidays.com/api/v4/Holidays/${countryCode}/${today.year + 1}`;
+		let holidays = await fetchData(url);
+		
+		for (let i = 0; i < holidays.length; i++) {
+			let currHolidayDate = Temporal.PlainDate.from(holidays[i].date);
+			
+			if (nextFourHolidays.length < 4) {
+				nextFourHolidays.push(holidays[i]);
+			}
 		}
 	}
 	console.log(url);
